@@ -4,7 +4,6 @@ import pino from 'pino-http';
 import dotenv from 'dotenv';
 import contactsRouter from './routes/contactsRoutes.js';
 
-
 dotenv.config();
 
 const setupServer = () => {
@@ -14,10 +13,15 @@ const setupServer = () => {
   app.use(pino());
   app.use(express.json()); 
 
- 
+
+  app.get('/', (req, res) => {
+    res.send('Welcome to the Contacts API!');
+  });
+
+
   app.use('/contacts', contactsRouter);
 
- 
+
   app.use('*', (req, res) => {
     res.status(404).json({ message: 'Not found' });
   });
