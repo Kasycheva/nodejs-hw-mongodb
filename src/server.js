@@ -11,8 +11,7 @@ const setupServer = () => {
 
   app.use(cors());
   app.use(pino());
-  app.use(express.json()); 
-
+  app.use(express.json());
 
   app.get('/', (req, res) => {
     res.send('Welcome to the Contacts API!');
@@ -20,7 +19,6 @@ const setupServer = () => {
 
 
   app.use('/contacts', contactsRouter);
-
 
   app.use('*', (req, res) => {
     res.status(404).json({ message: 'Not found' });
