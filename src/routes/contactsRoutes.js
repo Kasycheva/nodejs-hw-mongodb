@@ -1,14 +1,12 @@
 import express from 'express';
+import { getAllContacts, getContactById } from '../controllers/contactsController.js';
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.status(200).json({ message: 'Contacts retrieved successfully!' });
-});
 
-router.get('/:contactId', (req, res) => {
-  const { contactId } = req.params;
-  res.status(200).json({ message: `Contact with ID ${contactId} retrieved successfully!` });
-});
+router.get('/', getAllContacts);
+
+
+router.get('/:contactId', getContactById);
 
 export default router;
