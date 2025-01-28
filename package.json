@@ -1,0 +1,26 @@
+{
+  "name": "nodejs-hw-02",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Kasycheva Mariia <kasycheva00@ukr.net>",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "eslint": "^9.19.0",
+    "nodemon": "^3.1.9"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongodb": "^6.12.0",
+    "mongoose": "^8.9.5",
+    "pino-http": "^10.4.0"
+  }
+}
