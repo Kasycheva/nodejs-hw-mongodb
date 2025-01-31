@@ -1,6 +1,7 @@
 import { Contact } from "../db/models/contact.js";
 import { ctrlWrapper } from "../utils/ctrlWrapper.js";
 import createHttpError from "http-errors";
+import mongoose from "mongoose";
 
 const getAllContactsHandler = async (req, res) => {
   const contacts = await Contact.find();
@@ -11,12 +12,16 @@ const getAllContactsHandler = async (req, res) => {
   });
 };
 
-const getContactByIdHandler = async (req, res, next) => {
+const getContactByIdHandler = async (req, res) => {
   const { contactId } = req.params;
-  const contact = await Contact.findById(contactId);
+  
+  if (!mongoose.Types.ObjectId.isValid(contactId)) {
+    throw createHttpError(400, "Invalid contact ID format");
+  }
 
+  const contact = await Contact.findById(contactId);
   if (!contact) {
-    return next(createHttpError(404, "Contact not found"));
+    throw createHttpError(404, "Contact not found");
   }
 
   res.status(200).json({
@@ -26,11 +31,11 @@ const getContactByIdHandler = async (req, res, next) => {
   });
 };
 
-const createContactHandler = async (req, res, next) => {
+const createContactHandler = async (req, res) => {
   const { name, phoneNumber, email, isFavourite, contactType } = req.body;
 
   if (!name || !phoneNumber || !contactType) {
-    return next(createHttpError(400, "Missing required fields: name, phoneNumber, or contactType"));
+    throw createHttpError(400, "Missing required fields: name, phoneNumber, or contactType");
   }
 
   const newContact = await Contact.create({
@@ -48,12 +53,16 @@ const createContactHandler = async (req, res, next) => {
   });
 };
 
-const updateContactHandler = async (req, res, next) => {
+const updateContactHandler = async (req, res) => {
   const { contactId } = req.params;
-  const updatedContact = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
 
+  if (!mongoose.Types.ObjectId.isValid(contactId)) {
+    throw createHttpError(400, "Invalid contact ID format");
+  }
+
+  const updatedContact = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
   if (!updatedContact) {
-    return next(createHttpError(404, "Contact not found"));
+    throw createHttpError(404, "Contact not found");
   }
 
   res.status(200).json({
@@ -63,23 +72,20 @@ const updateContactHandler = async (req, res, next) => {
   });
 };
 
-const deleteContactHandler = async (req, res, next) => {
+const deleteContactHandler = async (req, res) => {
   const { contactId } = req.params;
-  const trimmedId = contactId.trim(); 
-
-  const contact = await Contact.findByIdAndDelete(trimmedId);
-
-  if (!contact) {
-      return next(createHttpError(404, "Contact not found"));
+  
+  if (!mongoose.Types.ObjectId.isValid(contactId)) {
+    throw createHttpError(400, "Invalid contact ID format");
   }
 
-  res.status(200).json({
-      status: 200,
-      message: "Successfully deleted the contact!",
-      data: contact,
-  });
-};
+  const contact = await Contact.findByIdAndDelete(contactId);
+  if (!contact) {
+    throw createHttpError(404, "Contact not found");
+  }
 
+  res.status(204).send(); // Статус 204 без тела ответа
+};
 
 export const getAllContacts = ctrlWrapper(getAllContactsHandler);
 export const getContactById = ctrlWrapper(getContactByIdHandler);
