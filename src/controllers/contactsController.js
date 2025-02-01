@@ -4,17 +4,44 @@ import createHttpError from "http-errors";
 import mongoose from "mongoose";
 
 const getAllContactsHandler = async (req, res) => {
-  const contacts = await Contact.find();
+  const { page = 1, perPage = 10, sortBy = "name", sortOrder = "asc", isFavourite } = req.query;
+
+  const skip = (page - 1) * perPage;
+  const sortDirection = sortOrder === "desc" ? -1 : 1;
+
+  const filter = {};
+  if (isFavourite !== undefined) {
+    filter.isFavourite = isFavourite === "true";
+  }
+
+  const totalItems = await Contact.countDocuments(filter);
+  const totalPages = Math.ceil(totalItems / perPage);
+  const hasPreviousPage = page > 1;
+  const hasNextPage = page < totalPages;
+
+  const contacts = await Contact.find(filter)
+    .sort({ [sortBy]: sortDirection })
+    .skip(skip)
+    .limit(parseInt(perPage));
+
   res.status(200).json({
     status: 200,
     message: "Successfully found contacts!",
-    data: contacts,
+    data: {
+      data: contacts,
+      page: Number(page),
+      perPage: Number(perPage),
+      totalItems,
+      totalPages,
+      hasPreviousPage,
+      hasNextPage,
+    },
   });
 };
 
 const getContactByIdHandler = async (req, res) => {
   const { contactId } = req.params;
-  
+
   if (!mongoose.Types.ObjectId.isValid(contactId)) {
     throw createHttpError(400, "Invalid contact ID format");
   }
@@ -74,7 +101,7 @@ const updateContactHandler = async (req, res) => {
 
 const deleteContactHandler = async (req, res) => {
   const { contactId } = req.params;
-  
+
   if (!mongoose.Types.ObjectId.isValid(contactId)) {
     throw createHttpError(400, "Invalid contact ID format");
   }
@@ -84,7 +111,7 @@ const deleteContactHandler = async (req, res) => {
     throw createHttpError(404, "Contact not found");
   }
 
-  res.status(204).send(); // Статус 204 без тела ответа
+  res.status(204).send();
 };
 
 export const getAllContacts = ctrlWrapper(getAllContactsHandler);
