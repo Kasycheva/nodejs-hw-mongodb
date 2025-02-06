@@ -8,6 +8,7 @@ import {
 } from "../controllers/contactsController.js";
 import { validateBody } from "../middlewares/validateBody.js";
 import { isValidId } from "../middlewares/isValidId.js";
+import { authenticate } from "../middlewares/authenticate.js"; 
 import {
   createContactSchema,
   updateContactSchema,
@@ -15,10 +16,10 @@ import {
 
 const router = express.Router();
 
-router.get("/", getAllContacts);
-router.get("/:contactId", isValidId, getContactById);
-router.post("/", validateBody(createContactSchema), createContact);
-router.patch("/:contactId", isValidId, validateBody(updateContactSchema), updateContact);
-router.delete("/:contactId", isValidId, deleteContact);
+router.get("/", authenticate, getAllContacts); 
+router.get("/:contactId", authenticate, isValidId, getContactById);
+router.post("/", authenticate, validateBody(createContactSchema), createContact);
+router.patch("/:contactId", authenticate, isValidId, validateBody(updateContactSchema), updateContact);
+router.delete("/:contactId", authenticate, isValidId, deleteContact);
 
 export default router;
