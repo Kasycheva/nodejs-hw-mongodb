@@ -20,11 +20,10 @@ export const loginUser = async ({ email, password }) => {
   const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
   const refreshToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
- 
   await Session.deleteMany({ userId: user._id });
 
   const session = await Session.create({ userId: user._id, accessToken, refreshToken });
-  
+
   return { accessToken, refreshToken, sessionId: session._id };
 };
 
@@ -42,16 +41,15 @@ export const refreshUser = async (refreshToken) => {
   if (!session) throw createHttpError(401, "Session not found");
 
   const newAccessToken = jwt.sign({ userId: decoded.userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
-  const newRefreshToken = jwt.sign({ userId: decoded.userId }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
-  session.refreshToken = newRefreshToken;
-  await session.save();
-
-  return { accessToken: newAccessToken, refreshToken: newRefreshToken, sessionId: session._id };
+  return { accessToken: newAccessToken }; 
 };
 
 export const logoutUser = async (refreshToken) => {
   if (!refreshToken) throw createHttpError(401, "Unauthorized");
 
-  await Session.deleteMany({ refreshToken });
+  const session = await Session.findOne({ refreshToken });
+  if (!session) throw createHttpError(401, "Session not found");
+
+  await Session.deleteOne({ _id: session._id }); 
 };
