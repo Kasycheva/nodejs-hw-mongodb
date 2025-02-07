@@ -5,11 +5,12 @@ import mongoose from "mongoose";
 
 const getAllContactsHandler = async (req, res) => {
   const { page = 1, perPage = 10, sortBy = "name", sortOrder = "asc", isFavourite } = req.query;
+  const userId = req.user._id; 
 
   const skip = (page - 1) * perPage;
   const sortDirection = sortOrder === "desc" ? -1 : 1;
 
-  const filter = {};
+  const filter = { userId }; 
   if (isFavourite !== undefined) {
     filter.isFavourite = isFavourite === "true";
   }
@@ -41,12 +42,13 @@ const getAllContactsHandler = async (req, res) => {
 
 const getContactByIdHandler = async (req, res) => {
   const { contactId } = req.params;
+  const userId = req.user._id; 
 
   if (!mongoose.Types.ObjectId.isValid(contactId)) {
     throw createHttpError(400, "Invalid contact ID format");
   }
 
-  const contact = await Contact.findById(contactId);
+  const contact = await Contact.findOne({ _id: contactId, userId }); 
   if (!contact) {
     throw createHttpError(404, "Contact not found");
   }
@@ -60,6 +62,7 @@ const getContactByIdHandler = async (req, res) => {
 
 const createContactHandler = async (req, res) => {
   const { name, phoneNumber, email, isFavourite, contactType } = req.body;
+  const userId = req.user._id;
 
   if (!name || !phoneNumber || !contactType) {
     throw createHttpError(400, "Missing required fields: name, phoneNumber, or contactType");
@@ -71,6 +74,7 @@ const createContactHandler = async (req, res) => {
     email: email || null,
     isFavourite: isFavourite || false,
     contactType,
+    userId, 
   });
 
   res.status(201).json({
@@ -82,14 +86,15 @@ const createContactHandler = async (req, res) => {
 
 const updateContactHandler = async (req, res) => {
   const { contactId } = req.params;
+  const userId = req.user._id;
 
   if (!mongoose.Types.ObjectId.isValid(contactId)) {
     throw createHttpError(400, "Invalid contact ID format");
   }
 
-  const updatedContact = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
+  const updatedContact = await Contact.findOneAndUpdate({ _id: contactId, userId }, req.body, { new: true }); // ✅ Используем findOneAndUpdate
   if (!updatedContact) {
-    throw createHttpError(404, "Contact not found");
+    throw createHttpError(404, "Contact not found or access denied");
   }
 
   res.status(200).json({
@@ -101,14 +106,15 @@ const updateContactHandler = async (req, res) => {
 
 const deleteContactHandler = async (req, res) => {
   const { contactId } = req.params;
+  const userId = req.user._id;
 
   if (!mongoose.Types.ObjectId.isValid(contactId)) {
     throw createHttpError(400, "Invalid contact ID format");
   }
 
-  const contact = await Contact.findByIdAndDelete(contactId);
+  const contact = await Contact.findOneAndDelete({ _id: contactId, userId }); // ✅ Используем findOneAndDelete
   if (!contact) {
-    throw createHttpError(404, "Contact not found");
+    throw createHttpError(404, "Contact not found or access denied");
   }
 
   res.status(204).send();
