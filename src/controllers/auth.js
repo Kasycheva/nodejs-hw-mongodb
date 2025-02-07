@@ -1,49 +1,60 @@
 import { registerUser, loginUser, refreshUser, logoutUser } from "../services/auth.js";
 
-export const registerUserController = async (req, res) => {
-  const user = await registerUser(req.body);
-  res.status(201).json({
-    status: 201,
-    message: "Successfully registered a user!",
-    data: user,
-  });
+export const registerUserController = async (req, res, next) => {
+  try {
+    const user = await registerUser(req.body);
+    res.status(201).json({
+      status: 201,
+      message: "Successfully registered a user!",
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const loginUserController = async (req, res) => {
-  const { accessToken, refreshToken } = await loginUser(req.body);
+export const loginUserController = async (req, res, next) => {
+  try {
+    const { accessToken, refreshToken, sessionId } = await loginUser(req.body);
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: false,
-  });
+    res.cookie("refreshToken", refreshToken, { httpOnly: true, secure: false });
+    res.cookie("sessionId", sessionId, { httpOnly: true, secure: false });
 
-  res.status(200).json({
-    status: 200,
-    message: "Successfully logged in a user!",
-    data: { accessToken },
-  });
+    res.status(200).json({
+      status: 200,
+      message: "Successfully logged in a user!",
+      data: { accessToken },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const refreshUserController = async (req, res) => {
-  const { refreshToken } = req.cookies;
-  const newTokens = await refreshUser(refreshToken);
+export const refreshUserController = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.cookies;
+    const { accessToken } = await refreshUser(refreshToken);
 
-  res.cookie("refreshToken", newTokens.refreshToken, {
-    httpOnly: true,
-    secure: false,
-  });
-
-  res.status(200).json({
-    status: 200,
-    message: "Token refreshed successfully!",
-    data: newTokens,
-  });
+    res.status(200).json({
+      status: 200,
+      message: "Token refreshed successfully!",
+      data: { accessToken }, 
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const logoutUserController = async (req, res) => {
-  const { refreshToken } = req.cookies;
-  await logoutUser(refreshToken);
+export const logoutUserController = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.cookies;
+    await logoutUser(refreshToken);
 
-  res.clearCookie("refreshToken");
-  res.status(204).send();
+    res.clearCookie("refreshToken");
+    res.clearCookie("sessionId");
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
 };

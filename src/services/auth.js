@@ -20,13 +20,8 @@ export const loginUser = async ({ email, password }) => {
   const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
   const refreshToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
-  const accessTokenValidUntil = new Date(Date.now() + 15 * 60 * 1000);
-  const refreshTokenValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-  await Session.deleteMany({ userId: user._id }); 
-  await Session.create({ userId: user._id, accessToken, refreshToken, accessTokenValidUntil, refreshTokenValidUntil });
-
-  return { accessToken, refreshToken };
+  const session = await Session.create({ userId: user._id, accessToken, refreshToken });
+  return { accessToken, refreshToken, sessionId: session._id };
 };
 
 export const refreshUser = async (refreshToken) => {
@@ -43,17 +38,8 @@ export const refreshUser = async (refreshToken) => {
   if (!session) throw createHttpError(401, "Session not found");
 
   const accessToken = jwt.sign({ userId: decoded.userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
-  const newRefreshToken = jwt.sign({ userId: decoded.userId }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
-  const accessTokenValidUntil = new Date(Date.now() + 15 * 60 * 1000);
-  const refreshTokenValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-  await Session.updateOne(
-    { _id: session._id },
-    { refreshToken: newRefreshToken, accessTokenValidUntil, refreshTokenValidUntil }
-  );
-
-  return { accessToken, refreshToken: newRefreshToken };
+  return { accessToken };
 };
 
 export const logoutUser = async (refreshToken) => {
