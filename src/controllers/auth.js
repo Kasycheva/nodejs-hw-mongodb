@@ -32,13 +32,17 @@ export const loginUserController = async (req, res, next) => {
 
 export const refreshUserController = async (req, res, next) => {
   try {
-    const { refreshToken } = req.cookies;
+    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Unauthorized, refreshToken missing!" });
+    }
+
     const { accessToken } = await refreshUser(refreshToken);
 
     res.status(200).json({
       status: 200,
       message: "Token refreshed successfully!",
-      data: { accessToken }, 
+      data: { accessToken },
     });
   } catch (error) {
     next(error);
