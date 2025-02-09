@@ -51,13 +51,17 @@ export const refreshUserController = async (req, res, next) => {
 
 export const logoutUserController = async (req, res, next) => {
   try {
-    const { refreshToken } = req.cookies;
+    const refreshToken = req.cookies.refreshToken; 
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Unauthorized, refreshToken missing!" });
+    }
+
     await logoutUser(refreshToken);
 
     res.clearCookie("refreshToken");
     res.clearCookie("sessionId");
 
-    res.status(204).send();
+    res.status(204).send(); 
   } catch (error) {
     next(error);
   }

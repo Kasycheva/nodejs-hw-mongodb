@@ -13,6 +13,6 @@ const router = Router();
 router.post("/register", validateBody(registerUserSchema), registerUserController);
 router.post("/login", loginUserController);
 router.post("/refresh", refreshUserController);
-router.delete("/logout", logoutUserController);
+router.post("/logout", logoutUserController);
 
 export default router;
