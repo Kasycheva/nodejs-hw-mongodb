@@ -6,7 +6,6 @@ const sessionSchema = new mongoose.Schema(
     accessToken: { type: String, required: true },
     refreshToken: { type: String, required: true },
   },
-  { timestamps: true, versionKey: false }
 );
 
 export const Session = mongoose.model("Session", sessionSchema);

@@ -2,17 +2,25 @@ import { Router } from "express";
 import {
   registerUserController,
   loginUserController,
-  refreshUserController,
   logoutUserController,
+  refreshUserController,
+  requestResetTokenController,
+  resetPasswordController,
+  getAllUsersController,
+  deleteUserController
 } from "../controllers/auth.js";
-import { validateBody } from "../middlewares/validateBody.js";
-import { registerUserSchema } from "../validation/auth.js";
 
-const router = Router();
+const authRouter = Router();
 
-router.post("/register", validateBody(registerUserSchema), registerUserController);
-router.post("/login", loginUserController);
-router.post("/refresh", refreshUserController);
-router.post("/logout", logoutUserController);
+authRouter.post("/register", registerUserController);
+authRouter.post("/login", loginUserController);
+authRouter.post("/logout", logoutUserController);
+authRouter.post("/refresh", refreshUserController);
+authRouter.post("/request-reset", requestResetTokenController);
+authRouter.post("/reset-password", resetPasswordController);
+authRouter.get("/users", getAllUsersController);
+authRouter.delete("/delete-user", deleteUserController);
 
-export default router;
+
+
+export default authRouter;
