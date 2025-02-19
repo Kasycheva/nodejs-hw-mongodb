@@ -5,6 +5,7 @@ export const saveFileToCloudinary = async (filePath) => {
     const result = await cloudinary.uploader.upload(filePath, { folder: "contacts" });
     return result.secure_url;
   } catch (error) {
+    console.error("Помилка загрузки на Cloudinary:", error);
     throw new Error("Failed to upload image to Cloudinary");
   }
 };

@@ -1,4 +1,4 @@
-export const uploadController = async (req, res, next) => {
+export const uploadController = async (req, res) => {
     if(!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }

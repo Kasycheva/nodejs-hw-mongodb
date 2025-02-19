@@ -31,45 +31,33 @@ export const loginUser = async ({ email, password }) => {
   return { accessToken, refreshToken, sessionId: session._id };
 };
 
-
 export const refreshUser = async (refreshToken) => {
   if (!refreshToken) throw createHttpError(401, "Unauthorized");
 
-  let decoded;
   try {
-    decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-  } catch (err) {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+    const session = await Session.findOne({ refreshToken });
+    if (!session) throw createHttpError(401, "Session not found");
+
+    const newAccessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_SECRET, { expiresIn: "15m" });
+
+    return { accessToken: newAccessToken };
+  } catch (error) {
+    console.error(error);
     throw createHttpError(401, "Invalid refresh token");
   }
-
-  const session = await Session.findOne({ refreshToken });
-  if (!session) throw createHttpError(401, "Session not found");
-
-  const newAccessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_SECRET, { expiresIn: "15m" });
-
-  return { accessToken: newAccessToken };
 };
 
 export const logoutUser = async (refreshToken) => {
   if (!refreshToken) throw createHttpError(400, "Refresh token is required");
 
-  console.log("logout refreshToken:", refreshToken);
-
   const session = await Session.findOne({ refreshToken });
-
-  if (!session) {
-    console.warn("not found token", refreshToken);
-    throw createHttpError(401, "Session not found");
-  }
+  if (!session) throw createHttpError(401, "Session not found");
 
   await Session.deleteOne({ _id: session._id });
 
-  console.log("Logout successful for user:", session.userId);
-
   return { message: "Successfully logged out" };
 };
-
-
 
 export const requestResetToken = async (email) => {
   const user = await User.findOne({ email });
@@ -85,41 +73,29 @@ export const requestResetToken = async (email) => {
     from: getEnvVar("SMTP_FROM"),
     to: email,
     subject: "Reset Your Password",
-    html: `<p>Click <a href="${resetLink}">here</a> to reset your password!</p>`
+    html: `<p>Click <a href="${resetLink}">here</a> to reset your password!</p>`,
   });
 
-  return { message: "Reset Your Password" };
+  return { message: "Reset Your Password email sent" };
 };
 
 export const resetPassword = async (token, newPassword) => {
-  let decoded;
   try {
-    decoded = jwt.verify(token, getEnvVar("JWT_SECRET"));
-  } catch (err) {
+    const decoded = jwt.verify(token, getEnvVar("JWT_SECRET"));
+    const user = await User.findById(decoded.userId);
+    if (!user) throw createHttpError(404, "User not found");
+
+    user.password = await bcrypt.hash(newPassword, 10);
+
+    await user.save();
+
+    await Session.deleteMany({ userId: user._id });
+    return { message: "Password reset successfully" };
+  } catch (error) {
+    console.error(error);
     throw createHttpError(400, "Invalid or expired reset token");
   }
-
-  const user = await User.findById(decoded.userId);
-  if (!user) throw createHttpError(404, "User not found");
-
-  console.log("Старый пароль в БД:", user.password);
-
-  if (!user.isModified("password")) {
-    user.password = newPassword;
-  } else {
-    user.password = await bcrypt.hash(newPassword, 10);
-  }
-
-  console.log("Новый пароль (захешированный):", user.password);
-
-  await user.save();
-  console.log("Пароль обновлён в базе");
-
-  await Session.deleteMany({ userId: user._id });
-  return { message: "Password reset successfully" };
 };
-
-
 
 export const getAllUsers = async () => {
   return await User.find().select("-password");
