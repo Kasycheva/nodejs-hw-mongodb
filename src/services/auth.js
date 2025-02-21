@@ -14,6 +14,7 @@ export const registerUser = async ({ name, email, password }) => {
   return newUser;
 };
 
+
 export const loginUser = async ({ email, password }) => {
   const user = await User.findOne({ email });
   if (!user) throw createHttpError(401, "Invalid email");
@@ -30,6 +31,7 @@ export const loginUser = async ({ email, password }) => {
 
   return { accessToken, refreshToken, sessionId: session._id };
 };
+
 
 export const refreshUser = async (refreshToken) => {
   if (!refreshToken) throw createHttpError(401, "Unauthorized");
@@ -48,6 +50,7 @@ export const refreshUser = async (refreshToken) => {
   }
 };
 
+
 export const logoutUser = async (refreshToken) => {
   if (!refreshToken) throw createHttpError(400, "Refresh token is required");
 
@@ -59,13 +62,12 @@ export const logoutUser = async (refreshToken) => {
   return { message: "Successfully logged out" };
 };
 
+
 export const requestResetToken = async (email) => {
   const user = await User.findOne({ email });
   if (!user) throw createHttpError(404, "User not found");
 
-  const resetToken = jwt.sign({ userId: user._id }, getEnvVar("JWT_SECRET"), {
-    expiresIn: "15m",
-  });
+  const resetToken = jwt.sign({ userId: user._id }, getEnvVar("JWT_SECRET"), { expiresIn: "15m" });
 
   const resetLink = `${getEnvVar("APP_DOMAIN")}/reset-password?token=${resetToken}`;
 
@@ -79,6 +81,7 @@ export const requestResetToken = async (email) => {
   return { message: "Reset Your Password email sent" };
 };
 
+
 export const resetPassword = async (token, newPassword) => {
   try {
     const decoded = jwt.verify(token, getEnvVar("JWT_SECRET"));
@@ -86,10 +89,10 @@ export const resetPassword = async (token, newPassword) => {
     if (!user) throw createHttpError(404, "User not found");
 
     user.password = await bcrypt.hash(newPassword, 10);
-
     await user.save();
 
     await Session.deleteMany({ userId: user._id });
+
     return { message: "Password reset successfully" };
   } catch (error) {
     console.error(error);
@@ -97,9 +100,11 @@ export const resetPassword = async (token, newPassword) => {
   }
 };
 
+
 export const getAllUsers = async () => {
   return await User.find().select("-password");
 };
+
 
 export const deleteUser = async (email) => {
   const user = await User.findOneAndDelete({ email });

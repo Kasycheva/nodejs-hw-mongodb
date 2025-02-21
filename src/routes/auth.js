@@ -7,21 +7,21 @@ import {
   sendResetEmailController,
   resetPasswordController,
   getAllUsersController,
-  deleteUserController, requestResetTokenController
+  deleteUserController,
 } from "../controllers/auth.js";
+import { validateBody } from "../middlewares/validateBody.js";
+import { registerUserSchema, resetPasswordSchema } from "../validation/auth.js";
 
 const authRouter = Router();
 
-authRouter.post("/register", registerUserController);
+authRouter.post("/register", validateBody(registerUserSchema), registerUserController);
 authRouter.post("/login", loginUserController);
 authRouter.post("/logout", logoutUserController);
 authRouter.post("/refresh", refreshUserController);
 authRouter.post("/send-reset-email", sendResetEmailController);
-authRouter.post("/request-reset", requestResetTokenController);
-authRouter.post("/reset-pwd", resetPasswordController);
+authRouter.post("/reset-pwd", validateBody(resetPasswordSchema), resetPasswordController);
 authRouter.get("/users", getAllUsersController);
 authRouter.delete("/delete-user", deleteUserController);
-
 
 export default authRouter;
 
