@@ -13,12 +13,22 @@ import { authenticate } from "../middlewares/authenticate.js";
 import { createContactSchema, updateContactSchema } from "../validation/contactValidation.js";
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" }); 
+
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage });
 
 router.get("/", authenticate, getAllContacts);
 router.get("/:contactId", authenticate, isValidId, getContactById);
 router.post("/", authenticate, upload.single("photo"), validateBody(createContactSchema), createContact);
-router.patch("/:contactId", authenticate, upload.single("photo"), isValidId, validateBody(updateContactSchema), updateContact);
+
+router.patch("/:contactId", authenticate, upload.single("photo"), isValidId, updateContact);
+
 router.delete("/:contactId", authenticate, isValidId, deleteContact);
 
 export default router;

@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 import { saveFileToCloudinary } from "../utils/saveFileToCloudinary.js";
 import { calculatePaginationData } from "../utils/calculatePaginationData.js";
 import { parseSortParams } from "../utils/parseSortParams.js";
+import fs from "fs/promises"; 
+
 
 export const getAllContacts = async (req, res, next) => {
   try {
@@ -69,7 +71,9 @@ export const createContact = async (req, res, next) => {
     let photoUrl = "";
 
     if (req.file) {
+      console.log("Файл загружен:", req.file.path);
       photoUrl = await saveFileToCloudinary(req.file.path);
+      await fs.unlink(req.file.path); 
     }
 
     const newContact = await Contact.create({
@@ -104,10 +108,18 @@ export const updateContact = async (req, res, next) => {
     let updateData = req.body;
 
     if (req.file) {
+      console.log("Файл загружен:", req.file.path);
       updateData.photo = await saveFileToCloudinary(req.file.path);
+      await fs.unlink(req.file.path); 
     }
 
-    const updatedContact = await Contact.findOneAndUpdate({ _id: contactId, userId }, updateData, { new: true });
+    console.log("Оновленні дані:", updateData);
+
+    const updatedContact = await Contact.findOneAndUpdate(
+      { _id: contactId, userId },
+      updateData,
+      { new: true }
+    );
 
     if (!updatedContact) {
       throw createHttpError(404, "Contact not found or access denied");
@@ -118,7 +130,9 @@ export const updateContact = async (req, res, next) => {
       message: "Contact updated successfully!",
       data: updatedContact,
     });
+
   } catch (error) {
+    console.error("Помилка оновлення контакту:", error);
     next(error);
   }
 };
