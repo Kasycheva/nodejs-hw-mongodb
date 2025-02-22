@@ -90,10 +90,8 @@ export const resetPassword = async (token, newPassword) => {
     const user = await User.findById(decoded.userId);
     if (!user) throw createHttpError(404, "User not found");
 
-    user.password = await bcrypt.hash(newPassword, 10);
-    await user.save();
+    await user.updatePassword(newPassword);
 
-  
     await Session.deleteMany({ userId: user._id });
 
     return { message: "Password reset successfully" };
@@ -102,6 +100,7 @@ export const resetPassword = async (token, newPassword) => {
     throw createHttpError(400, "Invalid or expired reset token");
   }
 };
+
 
 export const getAllUsers = async () => {
   return await User.find().select("-password");

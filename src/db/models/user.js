@@ -37,8 +37,10 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 };
 
 userSchema.methods.updatePassword = async function (newPassword) {
+    if (!newPassword) throw new Error("New password is required");
     this.password = await bcrypt.hash(newPassword, 10);
-    return this.save();
+    await this.save();
 };
+
 
 export const User = mongoose.model("User", userSchema);
