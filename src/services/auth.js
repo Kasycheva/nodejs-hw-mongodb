@@ -10,7 +10,9 @@ export const registerUser = async ({ name, email, password }) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) throw createHttpError(409, "Email already in use");
 
-  const newUser = await User.create({ name, email, password });
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const newUser = await User.create({ name, email, password: hashedPassword });
+
   return newUser;
 };
 
@@ -18,7 +20,7 @@ export const loginUser = async ({ email, password }) => {
   const user = await User.findOne({ email });
   if (!user) throw createHttpError(401, "Invalid email");
 
-  const isPasswordCorrect = await user.comparePassword(password);
+  const isPasswordCorrect = await bcrypt.compare(password, user.password);
   if (!isPasswordCorrect) throw createHttpError(401, "Invalid password");
 
   const accessToken = jwt.sign({ userId: user._id }, process.env.ACCESS_SECRET, { expiresIn: "15m" });
@@ -41,14 +43,12 @@ export const refreshUser = async (refreshToken) => {
     if (!session) throw createHttpError(401, "Session not found");
 
     const newAccessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_SECRET, { expiresIn: "15m" });
-
-  
     const newRefreshToken = jwt.sign({ userId: decoded.userId }, process.env.REFRESH_SECRET, { expiresIn: "30d" });
 
     session.refreshToken = newRefreshToken;
     await session.save();
 
-    return { accessToken: newAccessToken, newRefreshToken };
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   } catch (error) {
     console.error(error);
     throw createHttpError(401, "Invalid refresh token");
@@ -90,7 +90,9 @@ export const resetPassword = async (token, newPassword) => {
     const user = await User.findById(decoded.userId);
     if (!user) throw createHttpError(404, "User not found");
 
-    await user.updatePassword(newPassword);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
 
     await Session.deleteMany({ userId: user._id });
 
@@ -100,7 +102,6 @@ export const resetPassword = async (token, newPassword) => {
     throw createHttpError(400, "Invalid or expired reset token");
   }
 };
-
 
 export const getAllUsers = async () => {
   return await User.find().select("-password");
