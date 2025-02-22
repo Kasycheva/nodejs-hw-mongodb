@@ -13,11 +13,12 @@ export const authenticate = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
-    if (!decoded) {
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.ACCESS_SECRET);
+    } catch (error) {
       return next(createHttpError(401, "Invalid or expired token"));
     }
-
     const session = await Session.findOne({ accessToken: token });
     if (!session) {
       return next(createHttpError(401, "Session expired. Please login again."));

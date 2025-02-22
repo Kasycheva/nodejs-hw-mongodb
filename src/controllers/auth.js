@@ -14,7 +14,6 @@ import { User } from "../db/models/user.js";
 import createHttpError from "http-errors";
 import jwt from "jsonwebtoken";
 
-
 export const registerUserController = async (req, res, next) => {
   try {
     const user = await registerUser(req.body);
@@ -46,7 +45,9 @@ export const refreshUserController = async (req, res, next) => {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) throw createHttpError(401, "Unauthorized");
 
-    const { accessToken } = await refreshUser(refreshToken);
+    const { accessToken, newRefreshToken } = await refreshUser(refreshToken);
+
+    res.cookie("refreshToken", newRefreshToken, { httpOnly: true, secure: true, sameSite: "Strict" });
 
     res.status(200).json({
       status: 200,
@@ -106,10 +107,10 @@ export const requestResetTokenController = async (req, res, next) => {
 
 export const resetPasswordController = async (req, res, next) => {
   try {
-    const { token, newPassword } = req.body;
-    if (!token || !newPassword) return res.status(400).json({ message: "Token and new password are required" });
+    const { token, password } = req.body; 
+    if (!token || !password) return res.status(400).json({ message: "Token and password are required" });
 
-    await resetPassword(token, newPassword);
+    await resetPassword(token, password);
 
     res.status(200).json({ status: 200, message: "Password has been successfully reset.", data: {} });
   } catch (error) {

@@ -24,4 +24,3 @@ authRouter.get("/users", getAllUsersController);
 authRouter.delete("/delete-user", deleteUserController);
 
 export default authRouter;
-
