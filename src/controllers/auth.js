@@ -68,7 +68,7 @@ export const logoutUserController = async (req, res, next) => {
     res.clearCookie("refreshToken");
     res.clearCookie("sessionId");
 
-    res.status(204).send();
+    res.status(204).send(); 
   } catch (error) {
     next(error);
   }
@@ -107,7 +107,7 @@ export const requestResetTokenController = async (req, res, next) => {
 
 export const resetPasswordController = async (req, res, next) => {
   try {
-    const { token, password } = req.body; 
+    const { token, password } = req.body;
     if (!token || !password) return res.status(400).json({ message: "Token and password are required" });
 
     await resetPassword(token, password);

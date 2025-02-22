@@ -19,6 +19,8 @@ export const authenticate = async (req, res, next) => {
     } catch (error) {
       return next(createHttpError(401, "Invalid or expired token"));
     }
+
+  
     const session = await Session.findOne({ accessToken: token });
     if (!session) {
       return next(createHttpError(401, "Session expired. Please login again."));

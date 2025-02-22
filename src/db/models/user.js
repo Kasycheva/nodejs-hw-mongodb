@@ -6,7 +6,6 @@ const userSchema = new mongoose.Schema(
         name: { type: String, required: true },
         email: { type: String, required: true, unique: true },
         password: { type: String, required: true, minlength: 6 },
-        refreshToken: { type: String },
         sessions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Session" }], 
     },
     { timestamps: true, versionKey: false }
@@ -17,7 +16,6 @@ userSchema.pre("save", async function (next) {
     this.password = await bcrypt.hash(this.password, 10);
     next();
 });
-
 
 userSchema.pre("findOneAndUpdate", async function (next) {
     const update = this.getUpdate();
@@ -30,8 +28,7 @@ userSchema.pre("findOneAndUpdate", async function (next) {
 userSchema.methods.toJSON = function () {
     const obj = this.toObject();
     delete obj.password;
-    delete obj.refreshToken;
-    delete obj.sessions; 
+    delete obj.sessions;
     return obj;
 };
 
@@ -41,16 +38,6 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 userSchema.methods.updatePassword = async function (newPassword) {
     this.password = await bcrypt.hash(newPassword, 10);
-    return this.save();
-};
-
-userSchema.methods.setRefreshToken = function (token) {
-    this.refreshToken = token;
-    return this.save();
-};
-
-userSchema.methods.clearRefreshToken = function () {
-    this.refreshToken = null;
     return this.save();
 };
 
