@@ -30,7 +30,14 @@ export const loginUser = async ({ email, password }) => {
   await user.save();
 
   await Session.deleteMany({ userId: user._id });
-  const session = await Session.create({ userId: user._id, accessToken, refreshToken });
+
+  const session = await Session.create({
+    userId: user._id,
+    accessToken,
+    refreshToken,
+    accessTokenValidUntil: new Date(Date.now() + 15 * 60 * 1000),
+    refreshTokenValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
+  });
 
   return { accessToken, refreshToken, sessionId: session._id };
 };
