@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import createHttpError from "http-errors";
 import { User } from "../db/models/user.js";
-import { Session } from "../db/models/session.js";
 
 export const authenticate = async (req, res, next) => {
   try {
@@ -20,15 +19,9 @@ export const authenticate = async (req, res, next) => {
       return next(createHttpError(401, "Invalid or expired token"));
     }
 
-  
-    const session = await Session.findOne({ accessToken: token });
-    if (!session) {
-      return next(createHttpError(401, "Session expired. Please login again."));
-    }
-
     const user = await User.findById(decoded.userId);
-    if (!user) {
-      return next(createHttpError(401, "User not found"));
+    if (!user || user.refreshToken !== req.cookies.refreshToken) {
+      return next(createHttpError(401, "Session expired. Please login again."));
     }
 
     req.user = user;
